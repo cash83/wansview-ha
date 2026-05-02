@@ -1,0 +1,6 @@
+{
+  "name": "Wansview / AJCloud",
+  "description": "Unofficial Home Assistant integration for Wansview and AJCloud cameras",
+  "render_readme": true,
+  "homeassistant": "2024.1.0"
+}
