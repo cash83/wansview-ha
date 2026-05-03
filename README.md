@@ -23,6 +23,32 @@ Multi-device supported: all cameras on the account are discovered automatically.
 
 ---
 
+## Video Streaming
+
+The integration exposes the camera live stream using the **local RTSP URL** reported by AJCloud.
+
+Example RTSP URLs:
+
+```text
+rtsp://192.168.1.50:554/live/ch0
+rtsp://192.168.1.50:557/live/ch0
+```
+
+The camera IP address and RTSP port are discovered automatically from the device information returned by AJCloud.  
+The actual RTSP port may vary depending on the camera model, firmware, or local network configuration.
+
+Home Assistant must be able to reach the camera directly on the local network. If the camera is on a different VLAN, subnet, firewall zone, or isolated WiFi network, make sure Home Assistant can access the camera local IP and RTSP port.
+
+For live streaming in Home Assistant, the built-in `stream` integration should be enabled:
+
+```yaml
+stream:
+```
+
+Snapshots are still provided through the cloud snapshot URL when available.
+
+---
+
 ## Installation via HACS
 
 1. In HACS → **Custom repositories** → add this repository URL → category **Integration**
@@ -50,4 +76,8 @@ These are installed automatically by Home Assistant.
 
 ## Disclaimer
 
-This integration is provided as-is with no warranty. It is not an official product of Wansview or AJCloud. Use at your own risk.
+This project is not affiliated with Wansview, AJCloud, or any related company.
+
+Use this integration at your own risk. The AJCloud API is not officially documented for third-party Home Assistant integrations, so endpoints or behavior may change without notice.
+
+No proprietary application code is included in this repository.
