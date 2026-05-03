@@ -30,8 +30,6 @@ async def async_setup_entry(
             known.add(device.device_id)
             if device.has_capability("floodlightTiming"):
                 new.append(WansviewFloodlightDurationNumber(coordinator, device))
-            if device.has_capability("detectEnhance"):
-                new.append(WansviewMotionSensitivityNumber(coordinator, device))
         if new:
             async_add_entities(new)
 
@@ -64,36 +62,6 @@ class WansviewFloodlightDurationNumber(WansviewEntity, NumberEntity):
         await self.coordinator.client.async_set_floodlight_config(
             self._dev,
             duration=int(value),
-        )
-        self.async_write_ha_state()
-        await asyncio.sleep(5)
-        await self.coordinator.async_request_refresh()
-
-
-class WansviewMotionSensitivityNumber(WansviewEntity, NumberEntity):
-    _attr_icon = "mdi:motion-sensor"
-    _attr_native_min_value = 0
-    _attr_native_max_value = 5
-    _attr_native_step = 1
-    _attr_mode = NumberMode.SLIDER
-
-    def __init__(
-        self,
-        coordinator: WansviewDataUpdateCoordinator,
-        device: WansviewDevice,
-    ) -> None:
-        super().__init__(coordinator, device)
-        self._attr_name = f"{device.name} Motion Sensitivity"
-        self._attr_unique_id = f"{device.unique_id}_motion_sensitivity"
-
-    @property
-    def native_value(self) -> int | None:
-        return self._dev.motion_sensitivity
-
-    async def async_set_native_value(self, value: float) -> None:
-        await self.coordinator.client.async_set_detections_config(
-            self._dev,
-            sensitivity=int(value),
         )
         self.async_write_ha_state()
         await asyncio.sleep(5)

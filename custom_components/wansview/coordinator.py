@@ -34,5 +34,15 @@ class WansviewDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "floodlight": device.floodlight_state,
                 "night_mode": device.night_mode,
                 "siren": device.siren_state,
+                "motion_full_viewport": (
+                    device.motion_full_viewport
+                    if device.motion_full_viewport is not None
+                    else prev_dev.get("motion_full_viewport")
+                ),
+                "motion_sensitivity": (
+                    device.motion_sensitivity
+                    if device.motion_sensitivity is not None
+                    else prev_dev.get("motion_sensitivity", 1)
+                ),
             }
         return data

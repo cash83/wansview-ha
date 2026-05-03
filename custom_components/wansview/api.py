@@ -467,27 +467,22 @@ class WansviewClient:
         full_viewport: bool | None = None,
     ) -> None:
         await self._ensure_auth()
-        config = dict(device.detections_config)
-        if not config:
-            config = {
-                "susceptiveness": "2",
-                "deviceType": 1,
-                "areaShowStyle": "0",
-                "areas": ["0,0,10000,10000"],
-                "fullViewport": "0",
-            }
+        config = self._normalized_detections_config(device)
         if sensitivity is not None:
-            # Firmware accepts 0,2,3,4,5. Value 1 is not exposed in the app.
             sens = int(sensitivity)
-            if sens == 1:
-                sens = 2
+            if sens < 1:
+                sens = 1
+            if sens > 5:
+                sens = 5
             config["susceptiveness"] = str(sens)
+            config["fullViewport"] = "1"
+            config["areas"] = ["0,0,10000,10000"]
         if full_viewport is not None:
             config["fullViewport"] = "1" if full_viewport else "0"
             if full_viewport:
                 config["areas"] = ["0,0,10000,10000"]
             else:
-                config.setdefault("areas", [])
+                config["areas"] = self._normalized_detection_areas(config.get("areas"))
         await self._request(
             "POST",
             f"{self._bases['cam_gw']}/v1/detections-config",
@@ -497,6 +492,27 @@ class WansviewClient:
             base_url=device.gateway_url,
         )
         device.raw.setdefault("info", {})["detectionsConfig"] = config
+
+    def _normalized_detections_config(self, device: WansviewDevice) -> dict[str, Any]:
+        config = dict(device.detections_config)
+        data = {
+            "susceptiveness": str(config.get("susceptiveness") or "2"),
+            "deviceType": int(config.get("deviceType") or device.raw.get("deviceType") or 1),
+            "areaShowStyle": str(config.get("areaShowStyle") or "0"),
+            "areas": self._normalized_detection_areas(config.get("areas")),
+            "fullViewport": "1" if str(config.get("fullViewport", "1")) == "1" else "0",
+        }
+        if data["fullViewport"] == "1":
+            data["areas"] = ["0,0,10000,10000"]
+        return data
+
+    @staticmethod
+    def _normalized_detection_areas(value: Any) -> list[str]:
+        if isinstance(value, list):
+            areas = [str(item) for item in value if str(item)]
+            if areas:
+                return areas
+        return ["0,0,10000,10000"]
 
     async def _ensure_auth(self) -> None:
         if not self._access_token:
@@ -761,11 +777,7 @@ class WansviewClient:
                 continue
             by_id[device_id].update(info_item)
 
-        enriched = [self._device_from_raw(by_id[device.device_id]) for device in devices]
-        for device in enriched:
-            if device.has_capability("detectEnhance"):
-                await self._async_add_detections_config(device)
-        return enriched
+        return [self._device_from_raw(by_id[device.device_id]) for device in devices]
 
     async def _async_add_detections_config(self, device: WansviewDevice) -> None:
         try:

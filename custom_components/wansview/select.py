@@ -17,6 +17,14 @@ FLOODLIGHT_MODE_TO_TRIGGER = {
     "Luce intelligente": "action-detect",
 }
 
+MOTION_SENSITIVITY_TO_VALUE = {
+    "Basso": 1,
+    "Medio basso": 2,
+    "Normale": 3,
+    "Medio alto": 4,
+    "Alto": 5,
+}
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -35,8 +43,8 @@ async def async_setup_entry(
             known.add(device.device_id)
             if device.has_capability("floodlightTiming"):
                 new.append(WansviewFloodlightModeSelect(coordinator, device))
-            # Motion sensitivity is intentionally exposed only as a number entity
-            # to avoid duplicated controls in the device page.
+            if device.has_capability("detectEnhance"):
+                new.append(WansviewMotionSensitivitySelect(coordinator, device))
         if new:
             async_add_entities(new)
 
@@ -85,3 +93,43 @@ class WansviewFloodlightModeSelect(WansviewEntity, SelectEntity):
         await self.coordinator.async_request_refresh()
 
 
+class WansviewMotionSensitivitySelect(WansviewEntity, SelectEntity):
+    _attr_options = list(MOTION_SENSITIVITY_TO_VALUE)
+    _attr_icon = "mdi:motion-sensor"
+
+    def __init__(
+        self,
+        coordinator: WansviewDataUpdateCoordinator,
+        device: WansviewDevice,
+    ) -> None:
+        super().__init__(coordinator, device)
+        self._attr_name = f"{device.name} Motion Sensitivity"
+        self._attr_unique_id = f"{device.unique_id}_motion_sensitivity_select"
+
+    @property
+    def current_option(self) -> str | None:
+        current = self._dev.motion_sensitivity
+        if current is None:
+            current = self.coordinator.data.get(self._device.device_id, {}).get(
+                "motion_sensitivity",
+                1,
+            )
+        for label, value in MOTION_SENSITIVITY_TO_VALUE.items():
+            if value == current:
+                return label
+        return None
+
+    async def async_select_option(self, option: str) -> None:
+        value = MOTION_SENSITIVITY_TO_VALUE.get(option)
+        if value is None:
+            return
+        await self.coordinator.client.async_set_detections_config(
+            self._dev,
+            sensitivity=value,
+        )
+        self.coordinator.data.setdefault(self._device.device_id, {})[
+            "motion_sensitivity"
+        ] = value
+        self.async_write_ha_state()
+        await asyncio.sleep(5)
+        await self.coordinator.async_request_refresh()
