@@ -9,12 +9,10 @@ Unofficial custom integration for Home Assistant that supports **Wansview** came
 ## Features
 
 - **Floodlight** — manual on/off control
-- **Floodlight Auto** — enable/disable automatic trigger mode
 - **Floodlight Mode** — select trigger: Disabled / Infrared auto / Smart light
 - **Floodlight Duration** — configure auto-off duration (seconds)
 - **Siren** — manual trigger
-- **Motion Full View** — enable/disable full-viewport motion detection
-- **Motion Sensitivity** — slider (0–5)
+- **Motion Sensitivity** — slider (1–5)
 - **Camera** — live stream (RTSP) and snapshot
 - **Online sensor** — connectivity status
 - **Diagnostic sensors** — firmware version, WiFi RSSI, WiFi signal %, WiFi SSID, local IP
